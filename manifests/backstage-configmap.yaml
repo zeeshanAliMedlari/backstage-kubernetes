@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backstage-config
+  namespace: new-backstage
+data:
+  app-config.yaml: |
+    app:
+      title: Scaffolded Backstage App
+      baseUrl: http://localhost:3000
+    organization:
+      name: My Company
+    backend:
+      baseUrl: http://backstage:7007
+      listen:
+        port: 7007
+      csp:
+        connect-src: ["'self'", 'http:', 'https:']
+      cors:
+        origin: http://localhost:3000
+        methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
+        credentials: true
+      database:
+        client: pg
+        connection:
+          host: postgres
+          port: 5432
+          user: backstage
+          password: ${POSTGRES_PASSWORD}
+          database: backstage
+    integrations:
+      github:
+        - host: github.com
+          token: ${GITHUB_TOKEN}
+    proxy:
+      # Add proxy endpoints here if needed
+    techdocs:
+      builder: 'local'
+      generator:
+        runIn: 'docker'
+      publisher:
+        type: 'local'
+    auth:
+      providers:
+        github:
+          development:
+            clientId: ${AUTH_GITHUB_CLIENT_ID}
+            clientSecret: ${AUTH_GITHUB_CLIENT_SECRET}
+        microsoft:
+          development:
+            clientId: ${AUTH_MICROSOFT_CLIENT_ID}
+            clientSecret: ${AUTH_MICROSOFT_CLIENT_SECRET}
+            tenantId: ${AUTH_MICROSOFT_TENANT_ID}
+            domainHint: ${AUTH_MICROSOFT_DOMAIN_HINT}
+            additionalScopes:
+              - Mail.Send
+            signIn:
+              resolvers:
+                - resolver: emailMatchingUserEntityProfileEmail
+        guest: {}
+    scaffolder:
+      # Configuration for software templates
+    catalog:
+      import:
+        entityFilename: catalog-info.yaml
+        pullRequestBranchName: backstage-integration
+      rules:
+        - allow: [Component, System, API, Resource, Location]
+      locations:
+        - type: file
+          target: ../../examples/entities.yaml
+        - type: file
+          target: ../../examples/template/template.yaml
+          rules:
+            - allow: [Template]
+        - type: file
+          target: ../../examples/org.yaml
+          rules:
+            - allow: [User, Group]
+    kubernetes:
+    serviceLocatorMethod:
+      type: 'multiTenant'
+    clusterLocatorMethods:
+      - type: 'config'
+        clusters:
+          - url: kubernetes.default.svc.cluster.local:443
+            name: local
+            authProvider: 'serviceAccount'
+            skipTLSVerify: false
+            skipMetricsLookup: true

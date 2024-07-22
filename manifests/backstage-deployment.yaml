@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backstage
+  namespace: new-backstage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backstage
+  template:
+    metadata:
+      labels:
+        app: backstage
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:13
+          command: ['sh', '-c', 'until pg_isready -h postgres -U backstage; do echo waiting for postgres; sleep 2; done;']
+          env:
+            - name: POSTGRES_USER
+              value: backstage
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: postgres-password
+      containers:
+        - name: backstage
+          image: zeeshanmedlari/zee-backstage:3.0
+          ports:
+            - containerPort: 7007
+          env:
+            - name: POSTGRES_HOST
+              value: postgres
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_USER
+              value: backstage
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: backstage-secrets
+                  key: POSTGRES_PASSWORD
+            - name: AUTH_GITHUB_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: backstage-secrets
+                  key: AUTH_GITHUB_CLIENT_ID
+            - name: AUTH_GITHUB_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: backstage-secrets
+                  key: AUTH_GITHUB_CLIENT_SECRET
+            - name: AUTH_MICROSOFT_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: backstage-secrets
+                  key: AUTH_MICROSOFT_CLIENT_ID
+            - name: AUTH_MICROSOFT_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: backstage-secrets
+                  key: AUTH_MICROSOFT_CLIENT_SECRET
+            - name: AUTH_MICROSOFT_TENANT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: backstage-secrets
+                  key: AUTH_MICROSOFT_TENANT_ID
+            - name: AUTH_MICROSOFT_DOMAIN_HINT
+              valueFrom:
+                secretKeyRef:
+                  name: backstage-secrets
+                  key: AUTH_MICROSOFT_DOMAIN_HINT
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: backstage-secrets
+                  key: GITHUB_TOKEN
+            - name: NODE_ENV
+              value: production
+          volumeMounts:
+            - name: backstage-config
+              mountPath: /etc/backstage
+              readOnly: true
+      volumes:
+        - name: backstage-config
+          configMap:
+            name: backstage-config

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backstage
+  namespace: new-backstage
+spec:
+  selector:
+    app: backstage
+  ports:
+    - name: http  # Ensure the port name is 'http'
+      port: 80
+      targetPort: 7007  # Ensure this matches the containerPort in the deployment
