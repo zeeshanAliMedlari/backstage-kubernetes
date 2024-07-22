@@ -27,7 +27,7 @@ spec:
                   key: postgres-password
       containers:
         - name: backstage
-          image: zeeshanmedlari/zee-backstage:3.0
+          image: zeeshanmedlari/zee-backstage:4.0
           ports:
             - containerPort: 7007
           env:
